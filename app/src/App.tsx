@@ -18,7 +18,10 @@ const App: Component = () => {
 
   const handleFilesLoaded = async (files: Array<File>) => {
     setLoading(true)
-    setLoadedFiles((prev) => [...prev, ...files.map((f) => f.name)])
+    setLoadedFiles((prev) => {
+      const newNames = files.map((f) => f.name).filter((name) => !prev.includes(name))
+      return [...prev, ...newNames]
+    })
     const allTransactions = files.flatMap((f) => parseCSV(f.content))
     const expenses = allTransactions.filter((tx) => tx.type === 'expense')
     setNonExpenses((prev) => [...prev, ...allTransactions.filter((tx) => tx.type !== 'expense')])
