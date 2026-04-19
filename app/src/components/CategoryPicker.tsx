@@ -63,11 +63,11 @@ const CategoryPicker: Component<CategoryPickerProps> = (props) => {
   })
 
   return (
-    <div class="relative">
+    <div class="absolute right-0 top-0 w-48 z-10">
       <input
         ref={inputRef}
         type="text"
-        class="w-full border rounded p-1 text-xs"
+        class="w-full border rounded p-1 text-xs bg-white"
         placeholder="Search category..."
         value={query()}
         onInput={(e) => {

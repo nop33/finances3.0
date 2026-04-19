@@ -21,7 +21,7 @@ const TransactionList: Component<TransactionListProps> = (props) => {
           <th class="pb-2 font-medium">Date</th>
           <th class="pb-2 font-medium">Merchant</th>
           <th class="pb-2 font-medium text-right">Amount</th>
-          <th class="pb-2 font-medium pl-4">Category</th>
+          <th class="pb-2 font-medium pl-4 w-48">Category</th>
         </tr>
       </thead>
       <tbody>
@@ -54,25 +54,29 @@ const TransactionList: Component<TransactionListProps> = (props) => {
               <td class="py-2 text-right font-mono whitespace-nowrap">
                 {tx.amount.toFixed(2)} {tx.currency}
               </td>
-              <td class="py-2 pl-4">
+              <td class="py-2 pl-4 relative">
                 <Show
-                  when={tx.category && editingId() !== tx.id}
+                  when={editingId() === tx.id}
                   fallback={
-                    <CategoryPicker
-                      onSelect={(cat, sub) => {
-                        props.onCategoryChange(tx.id, cat, sub)
-                        setEditingId(null)
+                    <button
+                      class="text-xs"
+                      classList={{
+                        'text-gray-700 hover:text-gray-900': !!tx.category,
+                        'text-gray-400 hover:text-gray-600 italic': !tx.category,
                       }}
-                      onCancel={() => setEditingId(null)}
-                    />
+                      onClick={() => setEditingId(tx.id)}
+                    >
+                      {tx.category ? `${tx.category} → ${tx.subcategory}` : 'Select category'}
+                    </button>
                   }
                 >
-                  <button
-                    class="text-xs text-gray-700 hover:text-gray-900"
-                    onClick={() => setEditingId(tx.id)}
-                  >
-                    {tx.category} → {tx.subcategory}
-                  </button>
+                  <CategoryPicker
+                    onSelect={(cat, sub) => {
+                      props.onCategoryChange(tx.id, cat, sub)
+                      setEditingId(null)
+                    }}
+                    onCancel={() => setEditingId(null)}
+                  />
                 </Show>
               </td>
             </tr>
