@@ -128,7 +128,9 @@ export const CATEGORIES: Category[] = [
       { name: 'Festivals', tier: 'want' },
       { name: 'Concerts', tier: 'want' },
       { name: 'Cinema', tier: 'want' },
-      { name: 'Streaming', tier: 'want' }
+      { name: 'Streaming', tier: 'want' },
+      { name: 'Alcohol', tier: 'want' },
+      { name: 'Snow', tier: 'want' }
     ]
   },
   {
