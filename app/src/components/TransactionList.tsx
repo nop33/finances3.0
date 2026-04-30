@@ -1,6 +1,8 @@
 import { type Component, For, Show, createSignal, createMemo } from 'solid-js'
 import { type CategorizedTransaction } from '../lib/categorization/engine'
 import CategoryPicker from './CategoryPicker'
+import ScissorsIcon from './icons/ScissorsIcon'
+import XMarkIcon from './icons/XMarkIcon'
 
 interface TransactionListProps {
   transactions: Array<CategorizedTransaction>
@@ -40,16 +42,7 @@ const TransactionList: Component<TransactionListProps> = (props) => {
               }}
             >
               <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
-                <div class="flex items-center gap-1">
-                  <button
-                    class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity text-base leading-none"
-                    onClick={() => props.onDelete(tx.id)}
-                    title="Remove transaction"
-                  >
-                    &times;
-                  </button>
-                  {tx.date.toLocaleDateString(props.locale || undefined)}
-                </div>
+                {tx.date.toLocaleDateString(props.locale || undefined)}
               </td>
               <td class="py-2 pr-3">
                 <div class="font-medium">{tx.merchant}</div>
@@ -99,36 +92,36 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                           when={splittingId() === tx.id}
                           fallback={
                             <button
-                              class="text-xs transition-all ml-1 cursor-pointer"
+                              class="text-xs cursor-pointer ml-1"
                               classList={{
                                 'text-orange-500 hover:text-orange-600': !!tx.splitPeople,
-                                'opacity-0 group-hover:opacity-30 hover:!opacity-100': !tx.splitPeople,
+                                'text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity': !tx.splitPeople,
                               }}
-                              onClick={() => {
-                                if (tx.splitPeople) {
-                                  props.onSplit(tx.id, undefined)
-                                } else {
-                                  setSplittingId(tx.id)
-                                }
-                              }}
-                              title={tx.splitPeople ? `Split by ${tx.splitPeople} — click to remove` : 'Split expense'}
+                              onClick={() => setSplittingId(tx.id)}
+                              title={tx.splitPeople ? `Split by ${tx.splitPeople} — click to edit` : 'Split expense'}
                             >
-                              {tx.splitPeople ? `✂ ÷${tx.splitPeople}` : '✂'}
+                              <div class="flex items-center gap-0.5">
+                                <ScissorsIcon />
+                                <Show when={tx.splitPeople}>
+                                  <span class="text-xs">÷{tx.splitPeople}</span>
+                                </Show>
+                              </div>
                             </button>
                           }
                         >
                           <div class="flex items-center gap-1 ml-1">
+                            <ScissorsIcon class="w-5 h-5 text-orange-500" />
                             <span class="text-xs text-gray-500">÷</span>
                             <input
                               type="number"
-                              min="2"
-                              value="2"
+                              min="1"
+                              value={tx.splitPeople ?? 2}
                               class="w-10 border rounded px-1 py-0.5 text-xs"
                               ref={(el) => setTimeout(() => el.focus())}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                   const val = parseInt(e.currentTarget.value)
-                                  if (val >= 2) props.onSplit(tx.id, val)
+                                  if (val >= 1) props.onSplit(tx.id, val <= 1 ? undefined : val)
                                   setSplittingId(null)
                                 } else if (e.key === 'Escape') {
                                   setSplittingId(null)
@@ -136,13 +129,20 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                               }}
                               onBlur={(e) => {
                                 const val = parseInt(e.currentTarget.value)
-                                if (val >= 2) props.onSplit(tx.id, val)
+                                if (val >= 1) props.onSplit(tx.id, val <= 1 ? undefined : val)
                                 setSplittingId(null)
                               }}
                             />
                           </div>
                         </Show>
                       </Show>
+                      <button
+                        class="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 cursor-pointer ml-1"
+                        onClick={() => props.onDelete(tx.id)}
+                        title="Remove transaction"
+                      >
+                        <XMarkIcon />
+                      </button>
                     </div>
                   }
                 >

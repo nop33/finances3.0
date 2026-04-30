@@ -1,7 +1,7 @@
 import { type Component, createSignal, createMemo, Show, onMount, For } from 'solid-js'
 import { parseFile } from './lib/parsers/detect'
 import { categorize, saveMapping, type CategorizedTransaction } from './lib/categorization/engine'
-import { seedDatabase } from './lib/storage/db'
+import { db, seedDatabase } from './lib/storage/db'
 import { convertToCHF } from './lib/currency'
 import FileDropZone, { type File } from './components/FileDropZone'
 import TransactionList from './components/TransactionList'
@@ -74,7 +74,26 @@ const App: Component = () => {
     return groups
   })
 
-  onMount(seedDatabase)
+  onMount(async () => {
+    await seedDatabase()
+    const stored = await db.transactions.toArray()
+    if (stored.length > 0) {
+      setTransactions(stored.map((t) => ({ ...t, date: new Date(t.date) })))
+
+      const sourceCounts: Record<string, number> = {}
+      for (const t of stored) {
+        sourceCounts[t.source] = (sourceCounts[t.source] ?? 0) + 1
+      }
+      const files: Record<string, string> = {}
+      for (const ei of EXPECTED_IMPORTS) {
+        if (!files[ei.id] && (sourceCounts[ei.source] ?? 0) > 0) {
+          files[ei.id] = '(previously imported)'
+          sourceCounts[ei.source]!--
+        }
+      }
+      setImportedFiles(files)
+    }
+  })
 
   const matchImport = (source: TransactionSource): string | null => {
     const current = importedFiles()
@@ -97,11 +116,12 @@ const App: Component = () => {
 
         const converted = await convertToCHF(parsed)
         const categorized = await categorize(converted)
-        setTransactions((prev) => {
-          const existingIds = new Set(prev.map((t) => t.id))
-          const newTxs = categorized.filter((t) => !existingIds.has(t.id))
-          return [...prev, ...newTxs]
-        })
+        const existingIds = new Set(transactions().map((t) => t.id))
+        const newTxs = categorized.filter((t) => !existingIds.has(t.id))
+        if (newTxs.length > 0) {
+          await db.transactions.bulkPut(newTxs)
+          setTransactions((prev) => [...prev, ...newTxs])
+        }
       }
     } catch (err) {
       console.error('Error processing files:', err)
@@ -115,9 +135,23 @@ const App: Component = () => {
     if (!tx) return
 
     await saveMapping(tx.merchant, category, subcategory)
+    await db.transactions.update(transactionId, { category, subcategory, confidence: 100 })
 
     setTransactions((prev) =>
       prev.map((t) => (t.id === transactionId ? { ...t, category, subcategory, confidence: 100 } : t))
+    )
+  }
+
+  const handleDelete = async (id: string) => {
+    await db.transactions.delete(id)
+    setTransactions((prev) => prev.filter((t) => t.id !== id))
+  }
+
+
+  const handleSplit = async (id: string, splitPeople: number | undefined) => {
+    await db.transactions.update(id, { splitPeople: splitPeople ?? undefined })
+    setTransactions((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, splitPeople } : t))
     )
   }
 
@@ -138,31 +172,15 @@ const App: Component = () => {
       <For each={monthGroups()}>
         {(group) => (
           <div class="mt-8">
-            <div class="group/month flex items-center justify-between mb-4">
-              <h2 class="text-xl font-bold">{group.label}</h2>
-              <button
-                class="opacity-0 group-hover/month:opacity-100 text-xs text-red-400 hover:text-red-600 transition-opacity"
-                onClick={() =>
-                  setTransactions((prev) =>
-                    prev.filter((t) => monthKey(t.date) !== group.key)
-                  )
-                }
-              >
-                Remove month
-              </button>
-            </div>
+            <h2 class="text-xl font-bold mb-4">{group.label}</h2>
             <div class="grid grid-cols-3 gap-8">
               <div class="col-span-2">
                 <TransactionList
                   transactions={group.transactions}
                   locale={locale()}
                   onCategoryChange={handleCategoryChange}
-                  onDelete={(id) => setTransactions((prev) => prev.filter((t) => t.id !== id))}
-                  onSplit={(id, splitPeople) =>
-                    setTransactions((prev) =>
-                      prev.map((t) => (t.id === id ? { ...t, splitPeople } : t))
-                    )
-                  }
+                  onDelete={handleDelete}
+                  onSplit={handleSplit}
                 />
               </div>
               <div>

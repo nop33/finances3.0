@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { type CategoryTier } from '../categorization/categories'
+import type { TransactionSource, TransactionType } from '../parsers/types'
 
 export interface MerchantMapping {
   id?: number
@@ -22,10 +23,16 @@ export interface StoredTransaction {
   description: string
   amount: number
   currency: string
-  source: string
+  source: TransactionSource
   sourceCard?: string
-  category: string
-  subcategory: string
+  rawCategory?: string
+  originalAmount?: number
+  originalCurrency?: string
+  type: TransactionType
+  category: string | null
+  subcategory: string | null
+  confidence: number
+  splitPeople?: number
 }
 
 export const db = new Dexie('financeTracker') as Dexie & {
@@ -43,6 +50,12 @@ db.version(2).stores({
   merchantMappings: '++id, keyword',
   customCategories: '++id, [category+subcategory]',
   transactions: 'id, date, category, subcategory'
+})
+
+db.version(3).stores({
+  merchantMappings: '++id, keyword',
+  customCategories: '++id, [category+subcategory]',
+  transactions: 'id, date, source, category, subcategory'
 })
 
 const SEED_MAPPINGS: Omit<MerchantMapping, 'id'>[] = [
