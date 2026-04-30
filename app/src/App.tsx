@@ -1,4 +1,4 @@
-import { type Component, createSignal, Show, onMount, For } from 'solid-js'
+import { type Component, createSignal, createMemo, Show, onMount, For } from 'solid-js'
 import { parseFile } from './lib/parsers/detect'
 import { categorize, saveMapping, type CategorizedTransaction } from './lib/categorization/engine'
 import { seedDatabase } from './lib/storage/db'
@@ -7,10 +7,39 @@ import FileDropZone, { type File } from './components/FileDropZone'
 import TransactionList from './components/TransactionList'
 import CategorySummary from './components/CategorySummary'
 
+interface MonthGroup {
+  key: string
+  label: string
+  transactions: Array<CategorizedTransaction>
+}
+
+const monthKey = (date: Date): string =>
+  `${date.getFullYear()}-${date.getMonth()}`
+
+const monthLabel = (date: Date): string =>
+  date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+
 const App: Component = () => {
   const [transactions, setTransactions] = createSignal<Array<CategorizedTransaction>>([])
   const [loadedFiles, setLoadedFiles] = createSignal<string[]>([])
   const [loading, setLoading] = createSignal(false)
+
+  const monthGroups = createMemo(() => {
+    const sorted = [...transactions()].sort((a, b) => b.date.getTime() - a.date.getTime())
+    const groups: MonthGroup[] = []
+
+    for (const tx of sorted) {
+      const key = monthKey(tx.date)
+      const last = groups[groups.length - 1]
+      if (last && last.key === key) {
+        last.transactions.push(tx)
+      } else {
+        groups.push({ key, label: monthLabel(tx.date), transactions: [tx] })
+      }
+    }
+
+    return groups
+  })
 
   onMount(seedDatabase)
 
@@ -69,32 +98,42 @@ const App: Component = () => {
         <p class="mt-4 text-gray-500">Processing...</p>
       </Show>
 
-      <Show when={transactions().length > 0}>
-        <div class="mt-8 grid grid-cols-3 gap-8">
-          <div class="col-span-2">
-            <h2 class="text-xl font-bold mb-4">Transactions</h2>
-            <TransactionList
-              transactions={transactions()}
-              onCategoryChange={handleCategoryChange}
-              onDelete={(id) => setTransactions((prev) => prev.filter((t) => t.id !== id))}
-              onDeleteMonth={(monthKey) =>
-                setTransactions((prev) =>
-                  prev.filter((t) => `${t.date.getFullYear()}-${t.date.getMonth()}` !== monthKey)
-                )
-              }
-              onSplit={(id, splitPeople) =>
-                setTransactions((prev) =>
-                  prev.map((t) => (t.id === id ? { ...t, splitPeople } : t))
-                )
-              }
-            />
+      <For each={monthGroups()}>
+        {(group) => (
+          <div class="mt-8">
+            <div class="group/month flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold">{group.label}</h2>
+              <button
+                class="opacity-0 group-hover/month:opacity-100 text-xs text-red-400 hover:text-red-600 transition-opacity"
+                onClick={() =>
+                  setTransactions((prev) =>
+                    prev.filter((t) => monthKey(t.date) !== group.key)
+                  )
+                }
+              >
+                Remove month
+              </button>
+            </div>
+            <div class="grid grid-cols-3 gap-8">
+              <div class="col-span-2">
+                <TransactionList
+                  transactions={group.transactions}
+                  onCategoryChange={handleCategoryChange}
+                  onDelete={(id) => setTransactions((prev) => prev.filter((t) => t.id !== id))}
+                  onSplit={(id, splitPeople) =>
+                    setTransactions((prev) =>
+                      prev.map((t) => (t.id === id ? { ...t, splitPeople } : t))
+                    )
+                  }
+                />
+              </div>
+              <div>
+                <CategorySummary transactions={group.transactions} />
+              </div>
+            </div>
           </div>
-          <div>
-            <h2 class="text-xl font-bold mb-4">Summary</h2>
-            <CategorySummary transactions={transactions()} />
-          </div>
-        </div>
-      </Show>
+        )}
+      </For>
 
     </div>
   )
