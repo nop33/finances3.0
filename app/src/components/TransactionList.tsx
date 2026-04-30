@@ -5,6 +5,7 @@ import CategoryPicker from './CategoryPicker'
 interface TransactionListProps {
   transactions: Array<CategorizedTransaction>
   onCategoryChange: (transactionId: string, category: string, subcategory: string) => void
+  onDelete: (transactionId: string) => void
 }
 
 const TransactionList: Component<TransactionListProps> = (props) => {
@@ -28,14 +29,23 @@ const TransactionList: Component<TransactionListProps> = (props) => {
         <For each={sorted()}>
           {(tx) => (
             <tr
-              class="border-b border-gray-100"
+              class="group border-b border-gray-100"
               classList={{
                 'bg-green-50': tx.confidence === 100,
                 'bg-yellow-50': tx.confidence === 0,
               }}
             >
               <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
-                {tx.date.toLocaleDateString('de-CH')}
+                <div class="flex items-center gap-1">
+                  <button
+                    class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity text-base leading-none"
+                    onClick={() => props.onDelete(tx.id)}
+                    title="Remove transaction"
+                  >
+                    &times;
+                  </button>
+                  {tx.date.toLocaleDateString('de-CH')}
+                </div>
               </td>
               <td class="py-2 pr-3">
                 <div class="font-medium">{tx.merchant}</div>

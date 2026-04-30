@@ -71,7 +71,11 @@ const App: Component = () => {
         <div class="mt-8 grid grid-cols-3 gap-8">
           <div class="col-span-2">
             <h2 class="text-xl font-bold mb-4">Transactions</h2>
-            <TransactionList transactions={transactions()} onCategoryChange={handleCategoryChange} />
+            <TransactionList
+              transactions={transactions()}
+              onCategoryChange={handleCategoryChange}
+              onDelete={(id) => setTransactions((prev) => prev.filter((t) => t.id !== id))}
+            />
           </div>
           <div>
             <h2 class="text-xl font-bold mb-4">Summary</h2>
