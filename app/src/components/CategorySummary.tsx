@@ -47,7 +47,9 @@ const CategorySummary: Component<CategorySummaryProps> = (props) => {
       }
     }
 
-    return Array.from(map.values()).sort((a, b) => b.total - a.total)
+    return Array.from(map.values()).sort((a, b) =>
+      a.category.localeCompare(b.category) || a.subcategory.localeCompare(b.subcategory)
+    )
   })
 
   const tierTotal = (tier: CategoryTier) =>
