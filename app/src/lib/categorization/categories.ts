@@ -115,7 +115,8 @@ export const CATEGORIES: Category[] = [
     name: 'Wellness',
     subcategories: [
       { name: 'Spa', tier: 'want' },
-      { name: 'Haircut', tier: 'need' }
+      { name: 'Haircut', tier: 'need' },
+      { name: 'Personal Care', tier: 'need' }
     ]
   },
   {
