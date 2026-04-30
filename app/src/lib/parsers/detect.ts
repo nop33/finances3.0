@@ -1,20 +1,31 @@
 import type { Transaction } from './types'
 import { parseCembra } from './cembra'
 import { parseSwisscard } from './swisscard'
+import { parseSwisspass } from './swisspass'
 
-type Parser = (csvText: string) => Array<Transaction>
+type Parser = (text: string) => Array<Transaction>
 
-const PARSERS: Record<string, Parser> = {
+const CSV_PARSERS: Record<string, Parser> = {
   'Account number': parseCembra,
   'Transaction date': parseSwisscard
 }
 
-export const parseCSV = (csvText: string): Array<Transaction> => {
-  const firstLine = csvText.slice(0, csvText.indexOf('\n')).trim()
+const isSwisspassHtml = (text: string): boolean => {
+  const start = text.slice(0, 500)
+  return start.includes('<!DOCTYPE html') && text.includes('swisspass.ch')
+}
 
-  for (const [headerKey, parser] of Object.entries(PARSERS)) {
-    if (firstLine.includes(headerKey)) return parser(csvText)
+export const parseFile = (text: string): Array<Transaction> => {
+  if (isSwisspassHtml(text)) return parseSwisspass(text)
+
+  const firstLine = text.slice(0, text.indexOf('\n')).trim()
+
+  for (const [headerKey, parser] of Object.entries(CSV_PARSERS)) {
+    if (firstLine.includes(headerKey)) return parser(text)
   }
 
-  throw new Error(`Unknown CSV format. Header: ${firstLine}`)
+  throw new Error(`Unknown file format. Header: ${firstLine}`)
 }
+
+/** @deprecated Use parseFile instead */
+export const parseCSV = parseFile

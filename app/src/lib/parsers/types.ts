@@ -1,4 +1,4 @@
-export type TransactionSource = 'cembra' | 'swisscard' | 'neon' | 'revolut' | 'manual'
+export type TransactionSource = 'cembra' | 'swisscard' | 'swisspass' | 'neon' | 'revolut' | 'manual'
 
 export type TransactionType = 'expense' | 'payment' | 'cashback'
 

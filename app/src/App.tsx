@@ -1,5 +1,5 @@
 import { type Component, createSignal, Show, onMount, For } from 'solid-js'
-import { parseCSV } from './lib/parsers/detect'
+import { parseFile } from './lib/parsers/detect'
 import { categorize, saveMapping, type CategorizedTransaction } from './lib/categorization/engine'
 import { seedDatabase } from './lib/storage/db'
 import type { Transaction } from './lib/parsers/types'
@@ -22,7 +22,7 @@ const App: Component = () => {
       const newNames = files.map((f) => f.name).filter((name) => !prev.includes(name))
       return [...prev, ...newNames]
     })
-    const allTransactions = files.flatMap((f) => parseCSV(f.content))
+    const allTransactions = files.flatMap((f) => parseFile(f.content))
     const expenses = allTransactions.filter((tx) => tx.type === 'expense')
     setNonExpenses((prev) => [...prev, ...allTransactions.filter((tx) => tx.type !== 'expense')])
     const categorized = await categorize(expenses)
