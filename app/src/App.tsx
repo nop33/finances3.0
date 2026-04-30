@@ -6,7 +6,25 @@ import { convertToCHF } from './lib/currency'
 import FileDropZone, { type File } from './components/FileDropZone'
 import TransactionList from './components/TransactionList'
 import CategorySummary from './components/CategorySummary'
+import ImportChecklist, { type ImportItem } from './components/ImportChecklist'
 import Settings from './components/Settings'
+import type { TransactionSource } from './lib/parsers/types'
+
+interface ExpectedImport {
+  id: string
+  label: string
+  source: TransactionSource
+}
+
+const EXPECTED_IMPORTS: ExpectedImport[] = [
+  { id: 'cembra-1', label: 'Cembra Card 1', source: 'cembra' },
+  { id: 'cembra-2', label: 'Cembra Card 2', source: 'cembra' },
+  { id: 'swisscard', label: 'Swisscards', source: 'swisscard' },
+  { id: 'neon', label: 'Neon', source: 'neon' },
+  { id: 'revolut', label: 'Revolut', source: 'revolut' },
+  { id: 'swisspass', label: 'SwissPass', source: 'swisspass' },
+  { id: 'splitwise', label: 'Splitwise', source: 'splitwise' },
+]
 
 interface MonthGroup {
   key: string
@@ -19,8 +37,16 @@ const monthKey = (date: Date): string =>
 
 const App: Component = () => {
   const [transactions, setTransactions] = createSignal<Array<CategorizedTransaction>>([])
-  const [loadedFiles, setLoadedFiles] = createSignal<string[]>([])
+  const [importedFiles, setImportedFiles] = createSignal<Record<string, string>>({})
   const [loading, setLoading] = createSignal(false)
+
+  const importItems = createMemo((): ImportItem[] =>
+    EXPECTED_IMPORTS.map((ei) => ({
+      id: ei.id,
+      label: ei.label,
+      fileName: importedFiles()[ei.id],
+    }))
+  )
   const [locale, setLocale] = createSignal(localStorage.getItem('locale') || navigator.language)
 
   const handleLocaleChange = (value: string) => {
@@ -50,21 +76,33 @@ const App: Component = () => {
 
   onMount(seedDatabase)
 
+  const matchImport = (source: TransactionSource): string | null => {
+    const current = importedFiles()
+    const match = EXPECTED_IMPORTS.find((ei) => ei.source === source && !current[ei.id])
+    return match?.id ?? null
+  }
+
   const handleFilesLoaded = async (files: Array<File>) => {
     setLoading(true)
     try {
-      setLoadedFiles((prev) => {
-        const newNames = files.map((f) => f.name).filter((name) => !prev.includes(name))
-        return [...prev, ...newNames]
-      })
-      const parsed = files.flatMap((f) => parseFile(f.content))
-      const allTransactions = await convertToCHF(parsed)
-      const categorized = await categorize(allTransactions)
-      setTransactions((prev) => {
-        const existingIds = new Set(prev.map((t) => t.id))
-        const newTxs = categorized.filter((t) => !existingIds.has(t.id))
-        return [...prev, ...newTxs]
-      })
+      for (const file of files) {
+        const parsed = parseFile(file.content)
+        if (parsed.length === 0) continue
+
+        const source = parsed[0].source
+        const matchId = matchImport(source)
+        if (matchId) {
+          setImportedFiles((prev) => ({ ...prev, [matchId]: file.name }))
+        }
+
+        const converted = await convertToCHF(parsed)
+        const categorized = await categorize(converted)
+        setTransactions((prev) => {
+          const existingIds = new Set(prev.map((t) => t.id))
+          const newTxs = categorized.filter((t) => !existingIds.has(t.id))
+          return [...prev, ...newTxs]
+        })
+      }
     } catch (err) {
       console.error('Error processing files:', err)
     } finally {
@@ -91,18 +129,7 @@ const App: Component = () => {
       </div>
 
       <FileDropZone onFilesLoaded={handleFilesLoaded} />
-
-      <Show when={loadedFiles().length > 0}>
-        <div class="mt-3 flex gap-2 flex-wrap">
-          <For each={loadedFiles()}>
-            {(name) => (
-              <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                {name}
-              </span>
-            )}
-          </For>
-        </div>
-      </Show>
+      <ImportChecklist items={importItems()} />
 
       <Show when={loading()}>
         <p class="mt-4 text-gray-500">Processing...</p>
