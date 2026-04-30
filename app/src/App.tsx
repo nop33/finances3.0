@@ -10,6 +10,7 @@ import ImportChecklist, { type ImportItem } from './components/ImportChecklist'
 import Settings from './components/Settings'
 import type { TransactionSource } from './lib/parsers/types'
 
+
 interface ExpectedImport {
   id: string
   label: string
@@ -35,19 +36,65 @@ interface MonthGroup {
 const monthKey = (date: Date): string =>
   `${date.getFullYear()}-${date.getMonth()}`
 
+const currentMonthKey = (): string => {
+  const now = new Date()
+  return `${now.getFullYear()}-${now.getMonth()}`
+}
+
 const App: Component = () => {
   const [transactions, setTransactions] = createSignal<Array<CategorizedTransaction>>([])
-  const [importedFiles, setImportedFiles] = createSignal<Record<string, string>>({})
   const [loading, setLoading] = createSignal(false)
-
-  const importItems = createMemo((): ImportItem[] =>
-    EXPECTED_IMPORTS.map((ei) => ({
-      id: ei.id,
-      label: ei.label,
-      fileName: importedFiles()[ei.id],
-    }))
-  )
   const [locale, setLocale] = createSignal(localStorage.getItem('locale') || navigator.language)
+  const [selectedMonth, setSelectedMonth] = createSignal(currentMonthKey())
+  const [manualToggles, setManualToggles] = createSignal<Record<string, boolean>>({})
+
+  const selectedMonthLabel = () => {
+    const [year, month] = selectedMonth().split('-').map(Number)
+    const date = new Date(year, month)
+    return date.toLocaleDateString(locale() || undefined, { month: 'long', year: 'numeric' })
+  }
+
+  const prevMonth = () => {
+    const [year, month] = selectedMonth().split('-').map(Number)
+    const d = new Date(year, month - 1)
+    setSelectedMonth(`${d.getFullYear()}-${d.getMonth()}`)
+    setManualToggles({})
+  }
+
+  const nextMonth = () => {
+    const [year, month] = selectedMonth().split('-').map(Number)
+    const d = new Date(year, month + 1)
+    setSelectedMonth(`${d.getFullYear()}-${d.getMonth()}`)
+    setManualToggles({})
+  }
+
+  const importItems = createMemo((): ImportItem[] => {
+    const key = selectedMonth()
+    const monthTxs = transactions().filter((t) => monthKey(t.date) === key)
+    const toggles = manualToggles()
+
+    const sourceCards: Record<string, Set<string>> = {}
+    for (const tx of monthTxs) {
+      if (!sourceCards[tx.source]) sourceCards[tx.source] = new Set()
+      sourceCards[tx.source].add(tx.sourceCard ?? '')
+    }
+
+    const usedCards: Record<string, number> = {}
+
+    return EXPECTED_IMPORTS.map((ei) => {
+      if (toggles[ei.id] !== undefined) {
+        return { id: ei.id, label: ei.label, done: toggles[ei.id] }
+      }
+
+      const cards = sourceCards[ei.source]
+      if (!cards || cards.size === 0) return { id: ei.id, label: ei.label, done: false }
+
+      usedCards[ei.source] = (usedCards[ei.source] ?? 0) + 1
+      const done = usedCards[ei.source] <= cards.size
+
+      return { id: ei.id, label: ei.label, done }
+    })
+  })
 
   const handleLocaleChange = (value: string) => {
     setLocale(value)
@@ -79,27 +126,8 @@ const App: Component = () => {
     const stored = await db.transactions.toArray()
     if (stored.length > 0) {
       setTransactions(stored.map((t) => ({ ...t, date: new Date(t.date) })))
-
-      const sourceCounts: Record<string, number> = {}
-      for (const t of stored) {
-        sourceCounts[t.source] = (sourceCounts[t.source] ?? 0) + 1
-      }
-      const files: Record<string, string> = {}
-      for (const ei of EXPECTED_IMPORTS) {
-        if (!files[ei.id] && (sourceCounts[ei.source] ?? 0) > 0) {
-          files[ei.id] = '(previously imported)'
-          sourceCounts[ei.source]!--
-        }
-      }
-      setImportedFiles(files)
     }
   })
-
-  const matchImport = (source: TransactionSource): string | null => {
-    const current = importedFiles()
-    const match = EXPECTED_IMPORTS.find((ei) => ei.source === source && !current[ei.id])
-    return match?.id ?? null
-  }
 
   const handleFilesLoaded = async (files: Array<File>) => {
     setLoading(true)
@@ -107,12 +135,6 @@ const App: Component = () => {
       for (const file of files) {
         const parsed = parseFile(file.content)
         if (parsed.length === 0) continue
-
-        const source = parsed[0].source
-        const matchId = matchImport(source)
-        if (matchId) {
-          setImportedFiles((prev) => ({ ...prev, [matchId]: file.name }))
-        }
 
         const converted = await convertToCHF(parsed)
         const categorized = await categorize(converted)
@@ -163,7 +185,23 @@ const App: Component = () => {
       </div>
 
       <FileDropZone onFilesLoaded={handleFilesLoaded} />
-      <ImportChecklist items={importItems()} />
+      <ImportChecklist
+        items={importItems()}
+        monthLabel={selectedMonthLabel()}
+        onPrevMonth={prevMonth}
+        onNextMonth={nextMonth}
+        onToggle={(id) =>
+          setManualToggles((prev) => {
+            const current = prev[id]
+            if (current !== undefined) {
+              const { [id]: _, ...rest } = prev
+              return rest
+            }
+            const item = importItems().find((i) => i.id === id)
+            return { ...prev, [id]: !item?.done }
+          })
+        }
+      />
 
       <Show when={loading()}>
         <p class="mt-4 text-gray-500">Processing...</p>
