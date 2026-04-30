@@ -5,6 +5,7 @@ export interface CategorizedTransaction extends Transaction {
   category: string | null
   subcategory: string | null
   confidence: number // 0-100
+  splitPeople?: number // if set, amount is split: 1/N to original category, rest to Gifts/Donations → Treats
 }
 
 const findMapping = (merchant: string, mappings: MerchantMapping[]): MerchantMapping | null =>

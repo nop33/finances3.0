@@ -82,6 +82,11 @@ const App: Component = () => {
                   prev.filter((t) => `${t.date.getFullYear()}-${t.date.getMonth()}` !== monthKey)
                 )
               }
+              onSplit={(id, splitPeople) =>
+                setTransactions((prev) =>
+                  prev.map((t) => (t.id === id ? { ...t, splitPeople } : t))
+                )
+              }
             />
           </div>
           <div>

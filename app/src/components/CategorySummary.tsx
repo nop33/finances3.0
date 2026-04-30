@@ -19,23 +19,29 @@ const CategorySummary: Component<CategorySummaryProps> = (props) => {
   const totals = createMemo(() => {
     const map = new Map<string, CategoryTotal>()
 
+    const addToMap = (category: string, subcategory: string, amount: number) => {
+      const key = `${category}::${subcategory}`
+      const tier = getTier(category, subcategory, allCategories())
+      if (!tier) return
+
+      const existing = map.get(key)
+      if (existing) {
+        existing.total += amount
+      } else {
+        map.set(key, { category, subcategory, tier, total: amount })
+      }
+    }
+
     for (const tx of props.transactions) {
       if (!tx.category || !tx.subcategory) continue
 
-      const key = `${tx.category}::${tx.subcategory}`
-      const existing = map.get(key)
-      const tier = getTier(tx.category, tx.subcategory, allCategories())
-      if (!tier) continue
-
-      if (existing) {
-        existing.total += tx.amount
+      if (tx.splitPeople && tx.splitPeople >= 2) {
+        const myShare = tx.amount / tx.splitPeople
+        const treatsShare = tx.amount - myShare
+        addToMap(tx.category, tx.subcategory, myShare)
+        addToMap('Gifts/Donations', 'Treats', treatsShare)
       } else {
-        map.set(key, {
-          category: tx.category,
-          subcategory: tx.subcategory,
-          tier,
-          total: tx.amount
-        })
+        addToMap(tx.category, tx.subcategory, tx.amount)
       }
     }
 

@@ -13,6 +13,7 @@ interface TransactionListProps {
   onCategoryChange: (transactionId: string, category: string, subcategory: string) => void
   onDelete: (transactionId: string) => void
   onDeleteMonth: (monthKey: string) => void
+  onSplit: (transactionId: string, splitPeople: number | undefined) => void
 }
 
 const monthLabel = (date: Date): string =>
@@ -23,6 +24,7 @@ const monthKey = (date: Date): string =>
 
 const TransactionList: Component<TransactionListProps> = (props) => {
   const [editingId, setEditingId] = createSignal<string | null>(null)
+  const [splittingId, setSplittingId] = createSignal<string | null>(null)
 
   const grouped = createMemo(() => {
     const sorted = [...props.transactions].sort((a, b) => b.date.getTime() - a.date.getTime())
@@ -118,16 +120,67 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                       <Show
                         when={editingId() === tx.id}
                         fallback={
-                          <button
-                            class="text-xs"
-                            classList={{
-                              'text-gray-700 hover:text-gray-900': !!tx.category,
-                              'text-gray-400 hover:text-gray-600 italic': !tx.category,
-                            }}
-                            onClick={() => setEditingId(tx.id)}
-                          >
-                            {tx.category ? `${tx.category} → ${tx.subcategory}` : 'Select category'}
-                          </button>
+                          <div class="flex items-center gap-1">
+                            <button
+                              class="text-xs"
+                              classList={{
+                                'text-gray-700 hover:text-gray-900': !!tx.category,
+                                'text-gray-400 hover:text-gray-600 italic': !tx.category,
+                              }}
+                              onClick={() => setEditingId(tx.id)}
+                            >
+                              {tx.category ? `${tx.category} → ${tx.subcategory}` : 'Select category'}
+                            </button>
+                            <Show when={tx.category && tx.type === 'expense'}>
+                              <Show
+                                when={splittingId() === tx.id}
+                                fallback={
+                                  <button
+                                    class="text-xs transition-all ml-1 cursor-pointer"
+                                    classList={{
+                                      'text-orange-500 hover:text-orange-600': !!tx.splitPeople,
+                                      'opacity-0 group-hover:opacity-30 hover:!opacity-100': !tx.splitPeople,
+                                    }}
+                                    onClick={() => {
+                                      if (tx.splitPeople) {
+                                        props.onSplit(tx.id, undefined)
+                                      } else {
+                                        setSplittingId(tx.id)
+                                      }
+                                    }}
+                                    title={tx.splitPeople ? `Split by ${tx.splitPeople} — click to remove` : 'Split expense'}
+                                  >
+                                    {tx.splitPeople ? `✂ ÷${tx.splitPeople}` : '✂'}
+                                  </button>
+                                }
+                              >
+                                <div class="flex items-center gap-1 ml-1">
+                                  <span class="text-xs text-gray-500">÷</span>
+                                  <input
+                                    type="number"
+                                    min="2"
+                                    value="2"
+                                    class="w-10 border rounded px-1 py-0.5 text-xs"
+                                    ref={(el) => setTimeout(() => el.focus())}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        const val = parseInt(e.currentTarget.value)
+                                        if (val >= 2) props.onSplit(tx.id, val)
+                                        setSplittingId(null)
+                                      } else if (e.key === 'Escape') {
+                                        setSplittingId(null)
+                                      }
+                                    }}
+                                    onBlur={(e) => {
+                                      const val = parseInt(e.currentTarget.value)
+                                      if (val >= 2) props.onSplit(tx.id, val)
+                                      setSplittingId(null)
+                                    }}
+                                  />
+                                </div>
+                              </Show>
+                            </Show>
+                          </div>
                         }
                       >
                         <CategoryPicker

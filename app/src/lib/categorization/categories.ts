@@ -170,6 +170,7 @@ export const CATEGORIES: Category[] = [
     subcategories: [
       { name: 'Family', tier: 'gifting' },
       { name: 'General', tier: 'gifting' },
+      { name: 'Treats', tier: 'gifting' },
       { name: 'Donations', tier: 'gifting' }
     ]
   },
