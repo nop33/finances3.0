@@ -35,13 +35,15 @@ const CategorySummary: Component<CategorySummaryProps> = (props) => {
     for (const tx of props.transactions) {
       if (!tx.category || !tx.subcategory) continue
 
+      const amount = tx.type === 'expense' ? Math.abs(tx.amount) : -Math.abs(tx.amount)
+
       if (tx.splitPeople && tx.splitPeople >= 2) {
-        const myShare = tx.amount / tx.splitPeople
-        const treatsShare = tx.amount - myShare
+        const myShare = amount / tx.splitPeople
+        const treatsShare = amount - myShare
         addToMap(tx.category, tx.subcategory, myShare)
         addToMap('Gifts/Donations', 'Treats', treatsShare)
       } else {
-        addToMap(tx.category, tx.subcategory, tx.amount)
+        addToMap(tx.category, tx.subcategory, amount)
       }
     }
 
