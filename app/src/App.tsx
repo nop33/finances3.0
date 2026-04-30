@@ -6,6 +6,7 @@ import { convertToCHF } from './lib/currency'
 import FileDropZone, { type File } from './components/FileDropZone'
 import TransactionList from './components/TransactionList'
 import CategorySummary from './components/CategorySummary'
+import Settings from './components/Settings'
 
 interface MonthGroup {
   key: string
@@ -16,13 +17,19 @@ interface MonthGroup {
 const monthKey = (date: Date): string =>
   `${date.getFullYear()}-${date.getMonth()}`
 
-const monthLabel = (date: Date): string =>
-  date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-
 const App: Component = () => {
   const [transactions, setTransactions] = createSignal<Array<CategorizedTransaction>>([])
   const [loadedFiles, setLoadedFiles] = createSignal<string[]>([])
   const [loading, setLoading] = createSignal(false)
+  const [locale, setLocale] = createSignal(localStorage.getItem('locale') || navigator.language)
+
+  const handleLocaleChange = (value: string) => {
+    setLocale(value)
+    localStorage.setItem('locale', value)
+  }
+
+  const monthLabel = (date: Date): string =>
+    date.toLocaleDateString(locale() || undefined, { month: 'long', year: 'numeric' })
 
   const monthGroups = createMemo(() => {
     const sorted = [...transactions()].sort((a, b) => b.date.getTime() - a.date.getTime())
@@ -78,7 +85,10 @@ const App: Component = () => {
 
   return (
     <div class="max-w-7xl mx-auto p-8">
-      <h1 class="text-2xl font-bold mb-8">Finance Tracker</h1>
+      <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-bold">Finance Tracker</h1>
+        <Settings locale={locale()} onLocaleChange={handleLocaleChange} />
+      </div>
 
       <FileDropZone onFilesLoaded={handleFilesLoaded} />
 
@@ -118,6 +128,7 @@ const App: Component = () => {
               <div class="col-span-2">
                 <TransactionList
                   transactions={group.transactions}
+                  locale={locale()}
                   onCategoryChange={handleCategoryChange}
                   onDelete={(id) => setTransactions((prev) => prev.filter((t) => t.id !== id))}
                   onSplit={(id, splitPeople) =>

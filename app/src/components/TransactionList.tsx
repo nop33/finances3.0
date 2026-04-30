@@ -4,6 +4,7 @@ import CategoryPicker from './CategoryPicker'
 
 interface TransactionListProps {
   transactions: Array<CategorizedTransaction>
+  locale: string
   onCategoryChange: (transactionId: string, category: string, subcategory: string) => void
   onDelete: (transactionId: string) => void
   onSplit: (transactionId: string, splitPeople: number | undefined) => void
@@ -47,7 +48,7 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                   >
                     &times;
                   </button>
-                  {tx.date.toLocaleDateString()}
+                  {tx.date.toLocaleDateString(props.locale || undefined)}
                 </div>
               </td>
               <td class="py-2 pr-3">
