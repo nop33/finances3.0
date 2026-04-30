@@ -1,10 +1,18 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { type CategoryTier } from '../categorization/categories'
 
 export interface MerchantMapping {
   id?: number
   keyword: string // lowercase, matched with includes()
   category: string
   subcategory: string
+}
+
+export interface CustomCategory {
+  id?: number
+  category: string
+  subcategory: string
+  tier: CategoryTier
 }
 
 export interface StoredTransaction {
@@ -22,11 +30,18 @@ export interface StoredTransaction {
 
 export const db = new Dexie('financeTracker') as Dexie & {
   merchantMappings: EntityTable<MerchantMapping, 'id'>
+  customCategories: EntityTable<CustomCategory, 'id'>
   transactions: EntityTable<StoredTransaction, 'id'>
 }
 
 db.version(1).stores({
   merchantMappings: '++id, keyword',
+  transactions: 'id, date, category, subcategory'
+})
+
+db.version(2).stores({
+  merchantMappings: '++id, keyword',
+  customCategories: '++id, [category+subcategory]',
   transactions: 'id, date, category, subcategory'
 })
 

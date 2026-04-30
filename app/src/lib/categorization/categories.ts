@@ -1,3 +1,5 @@
+import { db } from '../storage/db'
+
 export type CategoryTier = 'need' | 'want' | 'gifting' | 'savings' | 'transfer'
 
 export interface Subcategory {
@@ -8,6 +10,36 @@ export interface Subcategory {
 export interface Category {
   name: string
   subcategories: Subcategory[]
+}
+
+export const getAllCategories = async (): Promise<Category[]> => {
+  const custom = await db.customCategories.toArray()
+  if (custom.length === 0) return CATEGORIES
+
+  const merged = CATEGORIES.map((cat) => ({
+    name: cat.name,
+    subcategories: [...cat.subcategories]
+  }))
+
+  for (const c of custom) {
+    const existing = merged.find((cat) => cat.name === c.category)
+    if (existing) {
+      if (!existing.subcategories.some((s) => s.name === c.subcategory)) {
+        existing.subcategories.push({ name: c.subcategory, tier: c.tier })
+      }
+    } else {
+      merged.push({
+        name: c.category,
+        subcategories: [{ name: c.subcategory, tier: c.tier }]
+      })
+    }
+  }
+
+  return merged
+}
+
+export const addCustomCategory = async (category: string, subcategory: string, tier: CategoryTier) => {
+  await db.customCategories.add({ category, subcategory, tier })
 }
 
 export const CATEGORIES: Category[] = [

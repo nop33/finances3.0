@@ -1,6 +1,6 @@
-import { type Component, For, createMemo } from 'solid-js'
+import { type Component, For, createMemo, createResource } from 'solid-js'
 import { type CategorizedTransaction } from '../lib/categorization/engine'
-import { CATEGORIES, type CategoryTier } from '../lib/categorization/categories'
+import { CATEGORIES, getAllCategories, type Category, type CategoryTier } from '../lib/categorization/categories'
 
 interface CategorySummaryProps {
   transactions: Array<CategorizedTransaction>
@@ -14,6 +14,8 @@ interface CategoryTotal {
 }
 
 const CategorySummary: Component<CategorySummaryProps> = (props) => {
+  const [allCategories] = createResource(getAllCategories, { initialValue: CATEGORIES })
+
   const totals = createMemo(() => {
     const map = new Map<string, CategoryTotal>()
 
@@ -22,7 +24,7 @@ const CategorySummary: Component<CategorySummaryProps> = (props) => {
 
       const key = `${tx.category}::${tx.subcategory}`
       const existing = map.get(key)
-      const tier = getTier(tx.category, tx.subcategory)
+      const tier = getTier(tx.category, tx.subcategory, allCategories())
       if (!tier) continue
 
       if (existing) {
@@ -101,8 +103,8 @@ const CategorySummary: Component<CategorySummaryProps> = (props) => {
 
 export default CategorySummary
 
-const getTier = (category: string, subcategory: string): CategoryTier | null => {
-  const cat = CATEGORIES.find((c) => c.name === category)
+const getTier = (category: string, subcategory: string, categories: Category[]): CategoryTier | null => {
+  const cat = categories.find((c) => c.name === category)
   if (!cat) return null
   const sub = cat.subcategories.find((s) => s.name === subcategory)
   return sub?.tier ?? null
