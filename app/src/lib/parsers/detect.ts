@@ -3,6 +3,7 @@ import { parseCembra } from './cembra'
 import { parseSwisscard } from './swisscard'
 import { parseSwisspass } from './swisspass'
 import { parseNeon } from './neon'
+import { parseSplitwise } from './splitwise'
 
 type Parser = (text: string) => Array<Transaction>
 
@@ -12,13 +13,17 @@ const CSV_PARSERS: Record<string, Parser> = {
   '"Date";"Amount"': parseNeon
 }
 
-const isSwisspassHtml = (text: string): boolean => {
+const detectHtmlParser = (text: string): Parser | null => {
   const start = text.slice(0, 500)
-  return start.includes('<!DOCTYPE html') && text.includes('swisspass.ch')
+  if (!start.includes('<!DOCTYPE html')) return null
+  if (text.includes('swisspass.ch')) return parseSwisspass
+  if (text.includes('splitwise.com')) return parseSplitwise
+  return null
 }
 
 export const parseFile = (text: string): Array<Transaction> => {
-  if (isSwisspassHtml(text)) return parseSwisspass(text)
+  const htmlParser = detectHtmlParser(text)
+  if (htmlParser) return htmlParser(text)
 
   const firstLine = text.slice(0, text.indexOf('\n')).trim()
 

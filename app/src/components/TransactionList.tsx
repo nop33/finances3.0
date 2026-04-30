@@ -21,6 +21,7 @@ const TransactionList: Component<TransactionListProps> = (props) => {
         <tr class="text-left text-gray-500 border-b">
           <th class="pb-2 font-medium">Date</th>
           <th class="pb-2 font-medium">Merchant</th>
+          <th class="pb-2 font-medium">Type</th>
           <th class="pb-2 font-medium text-right">Amount</th>
           <th class="pb-2 font-medium pl-4 w-48">Category</th>
         </tr>
@@ -60,6 +61,17 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                     {' · '}<span class="text-blue-400">{tx.rawCategory}</span>
                   </Show>
                 </div>
+              </td>
+              <td class="py-2 pr-3">
+                <span
+                  class="text-xs px-1.5 py-0.5 rounded"
+                  classList={{
+                    'bg-red-100 text-red-700': tx.type === 'expense',
+                    'bg-green-100 text-green-700': tx.type === 'payment' || tx.type === 'cashback',
+                  }}
+                >
+                  {tx.type === 'expense' ? 'expense' : 'income'}
+                </span>
               </td>
               <td class="py-2 text-right font-mono whitespace-nowrap">
                 {tx.amount.toFixed(2)} {tx.currency}

@@ -1,4 +1,4 @@
-export type CategoryTier = 'need' | 'want' | 'gifting' | 'savings'
+export type CategoryTier = 'need' | 'want' | 'gifting' | 'savings' | 'transfer'
 
 export interface Subcategory {
   name: string
@@ -139,5 +139,12 @@ export const CATEGORIES: Category[] = [
       { name: 'Donations', tier: 'gifting' }
     ]
   },
-  { name: 'Personal/3rd Pillar', subcategories: [{ name: 'VIAC', tier: 'savings' }] }
+  { name: 'Personal/3rd Pillar', subcategories: [{ name: 'VIAC', tier: 'savings' }] },
+  {
+    name: 'Transfers',
+    subcategories: [
+      { name: 'Credit Card Payment', tier: 'transfer' },
+      { name: 'Other', tier: 'transfer' }
+    ]
+  }
 ]

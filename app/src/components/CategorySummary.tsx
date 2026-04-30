@@ -18,7 +18,7 @@ const CategorySummary: Component<CategorySummaryProps> = (props) => {
     const map = new Map<string, CategoryTotal>()
 
     for (const tx of props.transactions) {
-      if (!tx.category || !tx.subcategory || tx.amount <= 0) continue
+      if (!tx.category || !tx.subcategory) continue
 
       const key = `${tx.category}::${tx.subcategory}`
       const existing = map.get(key)
@@ -56,7 +56,7 @@ const CategorySummary: Component<CategorySummaryProps> = (props) => {
       <div>
         <h3 class="font-bold text-lg mb-2">By Category</h3>
         <div class="space-y-1">
-          <For each={totals()}>
+          <For each={totals().filter((t) => t.tier !== 'transfer')}>
             {(t) => (
               <div class="flex justify-between text-sm">
                 <span>

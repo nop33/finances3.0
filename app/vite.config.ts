@@ -7,6 +7,13 @@ export default defineConfig({
   plugins: [devtools(), solidPlugin(), tailwindcss()],
   server: {
     port: 3000,
+    proxy: {
+      '/api/rates': {
+        target: 'https://api.frankfurter.app',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/rates/, ''),
+      },
+    },
   },
   build: {
     target: 'esnext',

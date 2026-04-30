@@ -2,15 +2,13 @@ import { type Component, createSignal, Show, onMount, For } from 'solid-js'
 import { parseFile } from './lib/parsers/detect'
 import { categorize, saveMapping, type CategorizedTransaction } from './lib/categorization/engine'
 import { seedDatabase } from './lib/storage/db'
-import type { Transaction } from './lib/parsers/types'
+import { convertToCHF } from './lib/currency'
 import FileDropZone, { type File } from './components/FileDropZone'
 import TransactionList from './components/TransactionList'
 import CategorySummary from './components/CategorySummary'
 
 const App: Component = () => {
   const [transactions, setTransactions] = createSignal<Array<CategorizedTransaction>>([])
-  const [nonExpenses, setNonExpenses] = createSignal<Array<Transaction>>([])
-  const [showNonExpenses, setShowNonExpenses] = createSignal(false)
   const [loadedFiles, setLoadedFiles] = createSignal<string[]>([])
   const [loading, setLoading] = createSignal(false)
 
@@ -18,20 +16,24 @@ const App: Component = () => {
 
   const handleFilesLoaded = async (files: Array<File>) => {
     setLoading(true)
-    setLoadedFiles((prev) => {
-      const newNames = files.map((f) => f.name).filter((name) => !prev.includes(name))
-      return [...prev, ...newNames]
-    })
-    const allTransactions = files.flatMap((f) => parseFile(f.content))
-    const expenses = allTransactions.filter((tx) => tx.type === 'expense')
-    setNonExpenses((prev) => [...prev, ...allTransactions.filter((tx) => tx.type !== 'expense')])
-    const categorized = await categorize(expenses)
-    setTransactions((prev) => {
-      const existingIds = new Set(prev.map((t) => t.id))
-      const newTxs = categorized.filter((t) => !existingIds.has(t.id))
-      return [...prev, ...newTxs]
-    })
-    setLoading(false)
+    try {
+      setLoadedFiles((prev) => {
+        const newNames = files.map((f) => f.name).filter((name) => !prev.includes(name))
+        return [...prev, ...newNames]
+      })
+      const parsed = files.flatMap((f) => parseFile(f.content))
+      const allTransactions = await convertToCHF(parsed)
+      const categorized = await categorize(allTransactions)
+      setTransactions((prev) => {
+        const existingIds = new Set(prev.map((t) => t.id))
+        const newTxs = categorized.filter((t) => !existingIds.has(t.id))
+        return [...prev, ...newTxs]
+      })
+    } catch (err) {
+      console.error('Error processing files:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleCategoryChange = async (transactionId: string, category: string, subcategory: string) => {
@@ -84,39 +86,6 @@ const App: Component = () => {
         </div>
       </Show>
 
-      <Show when={nonExpenses().length > 0}>
-        <div class="mt-8">
-          <button
-            class="text-sm text-gray-500 hover:text-gray-700"
-            onClick={() => setShowNonExpenses((prev) => !prev)}
-          >
-            {showNonExpenses() ? '▼' : '▶'} Payments & Cashback ({nonExpenses().length})
-          </button>
-
-          <Show when={showNonExpenses()}>
-            <table class="w-full text-sm mt-2 opacity-60">
-              <tbody>
-                <For each={nonExpenses()}>
-                  {(tx) => (
-                    <tr class="border-b border-gray-100">
-                      <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
-                        {tx.date.toLocaleDateString('de-CH')}
-                      </td>
-                      <td class="py-2 pr-3">
-                        <span class="font-medium">{tx.merchant}</span>
-                        <span class="text-gray-400 text-xs ml-2">{tx.type}</span>
-                      </td>
-                      <td class="py-2 text-right font-mono whitespace-nowrap">
-                        {tx.amount.toFixed(2)} {tx.currency}
-                      </td>
-                    </tr>
-                  )}
-                </For>
-              </tbody>
-            </table>
-          </Show>
-        </div>
-      </Show>
     </div>
   )
 }
