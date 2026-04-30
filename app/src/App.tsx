@@ -77,6 +77,11 @@ const App: Component = () => {
               transactions={transactions()}
               onCategoryChange={handleCategoryChange}
               onDelete={(id) => setTransactions((prev) => prev.filter((t) => t.id !== id))}
+              onDeleteMonth={(monthKey) =>
+                setTransactions((prev) =>
+                  prev.filter((t) => `${t.date.getFullYear()}-${t.date.getMonth()}` !== monthKey)
+                )
+              }
             />
           </div>
           <div>

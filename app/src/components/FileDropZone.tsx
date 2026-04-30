@@ -2,7 +2,7 @@ import { type Component, createSignal, onMount, onCleanup } from 'solid-js'
 
 export type File = {
   name: string
-  content: string
+  content: string | ArrayBuffer
 }
 
 interface FileDropZoneProps {
@@ -19,12 +19,13 @@ const FileDropZone: Component<FileDropZoneProps> = (props) => {
     setDragging(false)
 
     const files = Array.from(e.dataTransfer?.files ?? [])
-    const supportedFiles = files.filter((f) => f.name.endsWith('.csv') || f.name.endsWith('.html'))
+    const supportedExts = ['.csv', '.html', '.xlsx']
+    const supportedFiles = files.filter((f) => supportedExts.some((ext) => f.name.endsWith(ext)))
 
     const results = await Promise.all(
       supportedFiles.map(async (file) => ({
         name: file.name,
-        content: await file.text()
+        content: file.name.endsWith('.xlsx') ? await file.arrayBuffer() : await file.text()
       }))
     )
 
@@ -65,7 +66,7 @@ const FileDropZone: Component<FileDropZoneProps> = (props) => {
     <>
       <div class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-gray-400 transition-colors">
         <p class="text-gray-500">Drop files here</p>
-        <p class="text-gray-400 text-sm mt-2">Cembra, Swisscard, Neon (CSV) / SwissPass, Splitwise (HTML)</p>
+        <p class="text-gray-400 text-sm mt-2">Cembra, Swisscard, Neon (CSV) / SwissPass, Splitwise (HTML) / Revolut (XLSX)</p>
       </div>
 
       {dragging() && (
