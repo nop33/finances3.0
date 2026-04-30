@@ -2,12 +2,14 @@ import type { Transaction } from './types'
 import { parseCembra } from './cembra'
 import { parseSwisscard } from './swisscard'
 import { parseSwisspass } from './swisspass'
+import { parseNeon } from './neon'
 
 type Parser = (text: string) => Array<Transaction>
 
 const CSV_PARSERS: Record<string, Parser> = {
   'Account number': parseCembra,
-  'Transaction date': parseSwisscard
+  'Transaction date': parseSwisscard,
+  '"Date";"Amount"': parseNeon
 }
 
 const isSwisspassHtml = (text: string): boolean => {

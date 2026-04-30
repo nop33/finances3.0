@@ -65,7 +65,7 @@ const FileDropZone: Component<FileDropZoneProps> = (props) => {
     <>
       <div class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-gray-400 transition-colors">
         <p class="text-gray-500">Drop files here</p>
-        <p class="text-gray-400 text-sm mt-2">Cembra, Swisscard (CSV) / SwissPass (HTML)</p>
+        <p class="text-gray-400 text-sm mt-2">Cembra, Swisscard, Neon (CSV) / SwissPass (HTML)</p>
       </div>
 
       {dragging() && (
