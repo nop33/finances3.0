@@ -1,8 +1,9 @@
-import { type Component, For, Show, createSignal, createMemo } from 'solid-js'
+import { type Component, For, Show, createSignal, createMemo, onMount, onCleanup } from 'solid-js'
 import { type CategorizedTransaction } from '../lib/categorization/engine'
 import CategoryPicker from './CategoryPicker'
 import ScissorsIcon from './icons/ScissorsIcon'
 import XMarkIcon from './icons/XMarkIcon'
+import EllipsisVerticalIcon from './icons/EllipsisVerticalIcon'
 
 interface TransactionListProps {
   transactions: Array<CategorizedTransaction>
@@ -15,6 +16,16 @@ interface TransactionListProps {
 const TransactionList: Component<TransactionListProps> = (props) => {
   const [editingId, setEditingId] = createSignal<string | null>(null)
   const [splittingId, setSplittingId] = createSignal<string | null>(null)
+  const [menuId, setMenuId] = createSignal<string | null>(null)
+
+  const handleClickOutsideMenu = (e: MouseEvent) => {
+    if (menuId() && !(e.target as HTMLElement).closest('.actions-menu')) {
+      setMenuId(null)
+    }
+  }
+
+  onMount(() => document.addEventListener('mousedown', handleClickOutsideMenu))
+  onCleanup(() => document.removeEventListener('mousedown', handleClickOutsideMenu))
 
   const sorted = createMemo(() =>
     [...props.transactions].sort((a, b) => b.date.getTime() - a.date.getTime())
@@ -29,6 +40,7 @@ const TransactionList: Component<TransactionListProps> = (props) => {
           <th class="pb-2 font-medium">Type</th>
           <th class="pb-2 font-medium text-right">Amount</th>
           <th class="pb-2 font-medium pl-4 w-48">Category</th>
+          <th class="pb-2 w-8"></th>
         </tr>
       </thead>
       <tbody>
@@ -87,62 +99,12 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                       >
                         {tx.category ? `${tx.category} → ${tx.subcategory}` : 'Select category'}
                       </button>
-                      <Show when={tx.category && tx.type === 'expense'}>
-                        <Show
-                          when={splittingId() === tx.id}
-                          fallback={
-                            <button
-                              class="text-xs cursor-pointer ml-1"
-                              classList={{
-                                'text-orange-500 hover:text-orange-600': !!tx.splitPeople,
-                                'text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity': !tx.splitPeople,
-                              }}
-                              onClick={() => setSplittingId(tx.id)}
-                              title={tx.splitPeople ? `Split by ${tx.splitPeople} — click to edit` : 'Split expense'}
-                            >
-                              <div class="flex items-center gap-0.5">
-                                <ScissorsIcon />
-                                <Show when={tx.splitPeople}>
-                                  <span class="text-xs">÷{tx.splitPeople}</span>
-                                </Show>
-                              </div>
-                            </button>
-                          }
-                        >
-                          <div class="flex items-center gap-1 ml-1">
-                            <ScissorsIcon class="w-5 h-5 text-orange-500" />
-                            <span class="text-xs text-gray-500">÷</span>
-                            <input
-                              type="number"
-                              min="1"
-                              value={tx.splitPeople ?? 2}
-                              class="w-10 border rounded px-1 py-0.5 text-xs"
-                              ref={(el) => setTimeout(() => el.focus())}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  const val = parseInt(e.currentTarget.value)
-                                  if (val >= 1) props.onSplit(tx.id, val <= 1 ? undefined : val)
-                                  setSplittingId(null)
-                                } else if (e.key === 'Escape') {
-                                  setSplittingId(null)
-                                }
-                              }}
-                              onBlur={(e) => {
-                                const val = parseInt(e.currentTarget.value)
-                                if (val >= 1) props.onSplit(tx.id, val <= 1 ? undefined : val)
-                                setSplittingId(null)
-                              }}
-                            />
-                          </div>
-                        </Show>
+                      <Show when={tx.splitPeople}>
+                        <span class="text-xs text-orange-500 ml-1 flex items-center gap-0.5">
+                          <ScissorsIcon class="w-4 h-4" />
+                          ÷{tx.splitPeople}
+                        </span>
                       </Show>
-                      <button
-                        class="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 cursor-pointer ml-1"
-                        onClick={() => props.onDelete(tx.id)}
-                        title="Remove transaction"
-                      >
-                        <XMarkIcon />
-                      </button>
                     </div>
                   }
                 >
@@ -154,6 +116,75 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                     onCancel={() => setEditingId(null)}
                   />
                 </Show>
+              </td>
+              <td class="py-2 pl-2 relative">
+                <div class="actions-menu">
+                  <Show
+                    when={splittingId() === tx.id}
+                    fallback={
+                      <button
+                        class="text-gray-400 hover:text-gray-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => setMenuId((prev) => prev === tx.id ? null : tx.id)}
+                      >
+                        <EllipsisVerticalIcon />
+                      </button>
+                    }
+                  >
+                    <div class="flex items-center gap-1">
+                      <ScissorsIcon class="w-4 h-4 text-orange-500" />
+                      <span class="text-xs text-gray-500">÷</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={tx.splitPeople ?? 2}
+                        class="w-10 border rounded px-1 py-0.5 text-xs"
+                        ref={(el) => setTimeout(() => el.focus())}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = parseInt(e.currentTarget.value)
+                            if (val >= 1) props.onSplit(tx.id, val <= 1 ? undefined : val)
+                            setSplittingId(null)
+                          } else if (e.key === 'Escape') {
+                            setSplittingId(null)
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.currentTarget.value)
+                          if (val >= 1) props.onSplit(tx.id, val <= 1 ? undefined : val)
+                          setSplittingId(null)
+                        }}
+                      />
+                    </div>
+                  </Show>
+                  <Show when={menuId() === tx.id}>
+                    <div class="absolute right-0 top-8 z-20 bg-white border rounded shadow-lg py-1 w-40">
+                      <Show when={tx.category && tx.type === 'expense'}>
+                        <button
+                          class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
+                          onClick={() => {
+                            setMenuId(null)
+                            setSplittingId(tx.id)
+                          }}
+                        >
+                          <ScissorsIcon class="w-4 h-4 text-gray-500" />
+                          {tx.splitPeople ? 'Edit split' : 'Split expense'}
+                        </button>
+                      </Show>
+                      <button
+                        class="w-full text-left px-3 py-2 text-sm hover:bg-red-50 text-red-500 flex items-center gap-2 cursor-pointer"
+                        onClick={() => {
+                          if (confirm('Remove this transaction?')) {
+                            setMenuId(null)
+                            props.onDelete(tx.id)
+                          }
+                        }}
+                      >
+                        <XMarkIcon class="w-4 h-4" />
+                        Remove
+                      </button>
+                    </div>
+                  </Show>
+                </div>
               </td>
             </tr>
           )}
