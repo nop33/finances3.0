@@ -88,10 +88,10 @@ const CategoryPicker: Component<CategoryPickerProps> = (props) => {
       <Show
         when={!creating()}
         fallback={
-          <div class="w-64 bg-white border rounded shadow-lg p-2 space-y-2">
+          <div class="w-64 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg p-2 space-y-2">
             <input
               type="text"
-              class="w-full border rounded p-1 text-xs"
+              class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded p-1 text-xs"
               placeholder="Category (e.g. Food)"
               value={newCategory()}
               onInput={(e) => setNewCategory(e.currentTarget.value)}
@@ -104,13 +104,13 @@ const CategoryPicker: Component<CategoryPickerProps> = (props) => {
             </datalist>
             <input
               type="text"
-              class="w-full border rounded p-1 text-xs"
+              class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded p-1 text-xs"
               placeholder="Subcategory (e.g. Takeaway)"
               value={newSubcategory()}
               onInput={(e) => setNewSubcategory(e.currentTarget.value)}
             />
             <select
-              class="w-full border rounded p-1 text-xs"
+              class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded p-1 text-xs"
               value={newTier()}
               onChange={(e) => setNewTier(e.currentTarget.value as CategoryTier)}
             >
@@ -126,7 +126,7 @@ const CategoryPicker: Component<CategoryPickerProps> = (props) => {
                 Add
               </button>
               <button
-                class="flex-1 text-xs border rounded px-2 py-1 hover:bg-gray-50"
+                class="flex-1 text-xs border dark:border-gray-600 rounded px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200"
                 onClick={() => setCreating(false)}
               >
                 Cancel
@@ -138,7 +138,7 @@ const CategoryPicker: Component<CategoryPickerProps> = (props) => {
         <input
           ref={inputRef}
           type="text"
-          class="w-full border rounded p-1 text-xs bg-white"
+          class="w-full border dark:border-gray-600 rounded p-1 text-xs bg-white dark:bg-gray-700 dark:text-gray-200"
           placeholder="Search category..."
           value={query()}
           onInput={(e) => {
@@ -147,12 +147,12 @@ const CategoryPicker: Component<CategoryPickerProps> = (props) => {
           }}
           onKeyDown={handleKeyDown}
         />
-        <div class="absolute z-10 mt-1 w-64 max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
+        <div class="absolute z-10 mt-1 w-64 max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg">
           <For each={filtered()}>
             {(opt, i) => (
               <button
-                class="w-full text-left px-2 py-1 text-xs hover:bg-gray-100"
-                classList={{ 'bg-blue-50': i() === selectedIndex() }}
+                class="w-full text-left px-2 py-1 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
+                classList={{ 'bg-blue-50 dark:bg-blue-900': i() === selectedIndex() }}
                 onClick={() => props.onSelect(opt.category, opt.subcategory)}
               >
                 {opt.label}
@@ -160,7 +160,7 @@ const CategoryPicker: Component<CategoryPickerProps> = (props) => {
             )}
           </For>
           <button
-            class="w-full text-left px-2 py-1 text-xs text-blue-500 hover:bg-blue-50 border-t"
+            class="w-full text-left px-2 py-1 text-xs text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 border-t dark:border-gray-700"
             onClick={() => setCreating(true)}
           >
             + New category...

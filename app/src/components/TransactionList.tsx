@@ -34,7 +34,7 @@ const TransactionList: Component<TransactionListProps> = (props) => {
   return (
     <table class="w-full text-sm">
       <thead>
-        <tr class="text-left text-gray-500 border-b">
+        <tr class="text-left text-gray-500 dark:text-gray-400 border-b dark:border-gray-700">
           <th class="pb-2 font-medium">Date</th>
           <th class="pb-2 font-medium">Merchant</th>
           <th class="pb-2 font-medium">Type</th>
@@ -47,26 +47,26 @@ const TransactionList: Component<TransactionListProps> = (props) => {
         <For each={sorted()}>
           {(tx) => (
             <tr
-              class="group border-b border-gray-100"
+              class="group border-b border-gray-100 dark:border-gray-800"
               classList={{
-                'bg-green-50': tx.confidence === 100,
-                'bg-yellow-50': tx.confidence === 0,
+                'bg-green-50 dark:bg-green-900/20': tx.confidence === 100,
+                'bg-yellow-50 dark:bg-yellow-900/20': tx.confidence === 0,
               }}
             >
-              <td class="py-2 pr-3 text-gray-500 whitespace-nowrap">
+              <td class="py-2 pr-3 text-gray-500 dark:text-gray-400 whitespace-nowrap">
                 {tx.date.toLocaleDateString(props.locale || undefined)}
               </td>
               <td class="py-2 pr-3">
                 <div class="font-medium">{tx.merchant}</div>
                 <Show when={tx.description !== tx.merchant}>
-                  <div class="text-gray-400 text-xs truncate max-w-xs" title={tx.description}>
+                  <div class="text-gray-400 dark:text-gray-500 text-xs truncate max-w-xs" title={tx.description}>
                     {tx.description}
                   </div>
                 </Show>
-                <div class="text-gray-400 text-xs">
+                <div class="text-gray-400 dark:text-gray-500 text-xs">
                   {tx.source}{tx.sourceCard ? ` · ${tx.sourceCard}` : ''}
                   <Show when={tx.rawCategory}>
-                    {' · '}<span class="text-blue-400">{tx.rawCategory}</span>
+                    {' · '}<span class="text-blue-400 dark:text-blue-500">{tx.rawCategory}</span>
                   </Show>
                 </div>
               </td>
@@ -74,8 +74,8 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                 <span
                   class="text-xs px-1.5 py-0.5 rounded"
                   classList={{
-                    'bg-red-100 text-red-700': tx.type === 'expense',
-                    'bg-green-100 text-green-700': tx.type === 'payment' || tx.type === 'cashback',
+                    'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400': tx.type === 'expense',
+                    'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': tx.type === 'payment' || tx.type === 'cashback',
                   }}
                 >
                   {tx.type === 'expense' ? 'expense' : 'income'}
@@ -92,8 +92,8 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                       <button
                         class="text-xs"
                         classList={{
-                          'text-gray-700 hover:text-gray-900': !!tx.category,
-                          'text-gray-400 hover:text-gray-600 italic': !tx.category,
+                          'text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100': !!tx.category,
+                          'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 italic': !tx.category,
                         }}
                         onClick={() => setEditingId(tx.id)}
                       >
@@ -123,7 +123,7 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                     when={splittingId() === tx.id}
                     fallback={
                       <button
-                        class="text-gray-400 hover:text-gray-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => setMenuId((prev) => prev === tx.id ? null : tx.id)}
                       >
                         <EllipsisVerticalIcon />
@@ -132,12 +132,12 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                   >
                     <div class="flex items-center gap-1">
                       <ScissorsIcon class="w-4 h-4 text-orange-500" />
-                      <span class="text-xs text-gray-500">÷</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400">÷</span>
                       <input
                         type="number"
                         min="1"
                         value={tx.splitPeople ?? 2}
-                        class="w-10 border rounded px-1 py-0.5 text-xs"
+                        class="w-10 border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-1 py-0.5 text-xs"
                         ref={(el) => setTimeout(() => el.focus())}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -157,10 +157,10 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                     </div>
                   </Show>
                   <Show when={menuId() === tx.id}>
-                    <div class="absolute right-0 top-8 z-20 bg-white border rounded shadow-lg py-1 w-40">
+                    <div class="absolute right-0 top-8 z-20 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg py-1 w-40">
                       <Show when={tx.category && tx.type === 'expense'}>
                         <button
-                          class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 cursor-pointer"
+                          class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200 flex items-center gap-2 cursor-pointer"
                           onClick={() => {
                             setMenuId(null)
                             setSplittingId(tx.id)
@@ -171,7 +171,7 @@ const TransactionList: Component<TransactionListProps> = (props) => {
                         </button>
                       </Show>
                       <button
-                        class="w-full text-left px-3 py-2 text-sm hover:bg-red-50 text-red-500 flex items-center gap-2 cursor-pointer"
+                        class="w-full text-left px-3 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 flex items-center gap-2 cursor-pointer"
                         onClick={() => {
                           if (confirm('Remove this transaction?')) {
                             setMenuId(null)

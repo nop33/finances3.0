@@ -23,22 +23,22 @@ const ImportChecklist: Component<ImportChecklistProps> = (props) => {
       <div class="flex items-center gap-3 mb-2">
         <div class="flex items-center gap-1">
           <button
-            class="text-gray-400 hover:text-gray-600 text-sm cursor-pointer"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm cursor-pointer"
             onClick={props.onPrevMonth}
           >
             ‹
           </button>
-          <span class="text-sm font-medium text-gray-600 min-w-32 text-center">
+          <span class="text-sm font-medium text-gray-600 dark:text-gray-300 min-w-32 text-center">
             {props.monthLabel}
           </span>
           <button
-            class="text-gray-400 hover:text-gray-600 text-sm cursor-pointer"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-sm cursor-pointer"
             onClick={props.onNextMonth}
           >
             ›
           </button>
         </div>
-        <span class="text-xs text-gray-400">
+        <span class="text-xs text-gray-400 dark:text-gray-500">
           {done()}/{total()}
         </span>
       </div>
@@ -48,8 +48,8 @@ const ImportChecklist: Component<ImportChecklistProps> = (props) => {
             <button
               class="text-xs px-2 py-1 rounded border cursor-pointer transition-colors"
               classList={{
-                'border-green-200 bg-green-50 text-green-700 hover:bg-green-100': item.done,
-                'border-gray-200 bg-gray-50 text-gray-400 hover:bg-gray-100': !item.done,
+                'border-green-200 bg-green-50 text-green-700 hover:bg-green-100 dark:border-green-800 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50': item.done,
+                'border-gray-200 bg-gray-50 text-gray-400 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-500 dark:hover:bg-gray-700': !item.done,
               }}
               onClick={() => props.onToggle(item.id)}
             >

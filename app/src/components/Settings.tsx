@@ -1,9 +1,13 @@
 import { type Component, For, Show, createSignal, createMemo, onMount, onCleanup } from 'solid-js'
 import CogIcon from './icons/CogIcon'
+import SunIcon from './icons/SunIcon'
+import MoonIcon from './icons/MoonIcon'
 
 interface SettingsProps {
   locale: string
   onLocaleChange: (locale: string) => void
+  dark: boolean
+  onDarkChange: (dark: boolean) => void
 }
 
 interface LocaleOption {
@@ -88,14 +92,26 @@ const Settings: Component<SettingsProps> = (props) => {
       </button>
 
       <Show when={open()}>
-        <div class="absolute right-0 mt-2 w-72 bg-white border rounded-lg shadow-lg p-4 z-20">
-          <h3 class="text-sm font-semibold text-gray-700 mb-3">Settings</h3>
-          <label class="block text-xs text-gray-500 mb-1">Locale</label>
+        <div class="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg p-4 z-20">
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Settings</h3>
+
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Theme</label>
+          <button
+            class="w-full text-left border dark:border-gray-600 rounded px-2 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200 flex items-center gap-2 mb-3"
+            onClick={() => props.onDarkChange(!props.dark)}
+          >
+            <Show when={props.dark} fallback={<SunIcon class="w-4 h-4" />}>
+              <MoonIcon class="w-4 h-4" />
+            </Show>
+            {props.dark ? 'Dark' : 'Light'}
+          </button>
+
+          <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Locale</label>
           <Show
             when={picking()}
             fallback={
               <button
-                class="w-full text-left border rounded px-2 py-1 text-sm hover:bg-gray-50"
+                class="w-full text-left border dark:border-gray-600 rounded px-2 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200"
                 onClick={() => setPicking(true)}
               >
                 {currentLabel()}
@@ -105,7 +121,7 @@ const Settings: Component<SettingsProps> = (props) => {
             <div class="relative">
               <input
                 type="text"
-                class="w-full border rounded px-2 py-1 text-sm"
+                class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded px-2 py-1 text-sm"
                 placeholder="Search locale..."
                 value={query()}
                 onInput={(e) => {
@@ -115,12 +131,12 @@ const Settings: Component<SettingsProps> = (props) => {
                 onKeyDown={handleKeyDown}
                 ref={(el) => setTimeout(() => el.focus())}
               />
-              <div class="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg">
+              <div class="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border dark:border-gray-700 rounded shadow-lg">
                 <For each={filtered()}>
                   {(opt, i) => (
                     <button
-                      class="w-full text-left px-2 py-1 text-xs hover:bg-gray-100"
-                      classList={{ 'bg-blue-50': i() === selectedIndex() }}
+                      class="w-full text-left px-2 py-1 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
+                      classList={{ 'bg-blue-50 dark:bg-blue-900': i() === selectedIndex() }}
                       onClick={() => handleSelect(opt.code)}
                     >
                       <span class="font-medium">{opt.label}</span>
@@ -131,7 +147,7 @@ const Settings: Component<SettingsProps> = (props) => {
               </div>
             </div>
           </Show>
-          <p class="text-xs text-gray-400 mt-2">
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
             Preview: {new Date().toLocaleDateString(props.locale || undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>

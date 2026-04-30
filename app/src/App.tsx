@@ -1,4 +1,4 @@
-import { type Component, createSignal, createMemo, Show, onMount, For } from 'solid-js'
+import { type Component, createSignal, createMemo, createEffect, Show, onMount, For } from 'solid-js'
 import { parseFile } from './lib/parsers/detect'
 import { categorize, saveMapping, type CategorizedTransaction } from './lib/categorization/engine'
 import { db, seedDatabase } from './lib/storage/db'
@@ -44,7 +44,13 @@ const currentMonthKey = (): string => {
 const App: Component = () => {
   const [transactions, setTransactions] = createSignal<Array<CategorizedTransaction>>([])
   const [loading, setLoading] = createSignal(false)
+  const [dark, setDark] = createSignal(localStorage.getItem('dark') === 'true')
   const [locale, setLocale] = createSignal(localStorage.getItem('locale') || navigator.language)
+
+  createEffect(() => {
+    document.documentElement.classList.toggle('dark', dark())
+    localStorage.setItem('dark', String(dark()))
+  })
   const [selectedMonth, setSelectedMonth] = createSignal(currentMonthKey())
   const [manualToggles, setManualToggles] = createSignal<Record<string, boolean>>({})
 
@@ -178,10 +184,11 @@ const App: Component = () => {
   }
 
   return (
-    <div class="max-w-7xl mx-auto p-8">
+    <div class="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+      <div class="max-w-7xl mx-auto p-8">
       <div class="flex items-center justify-between mb-8">
         <h1 class="text-2xl font-bold">Finance Tracker</h1>
-        <Settings locale={locale()} onLocaleChange={handleLocaleChange} />
+        <Settings locale={locale()} onLocaleChange={handleLocaleChange} dark={dark()} onDarkChange={setDark} />
       </div>
 
       <FileDropZone onFilesLoaded={handleFilesLoaded} />
@@ -229,6 +236,7 @@ const App: Component = () => {
         )}
       </For>
 
+    </div>
     </div>
   )
 }

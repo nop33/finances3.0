@@ -71,7 +71,7 @@ const CategorySummary: Component<CategorySummaryProps> = (props) => {
               <div class="flex justify-between text-sm">
                 <span>
                   {t.category} → {t.subcategory}
-                  <span class="text-gray-400 ml-1">({t.tier})</span>
+                  <span class="text-gray-400 dark:text-gray-500 ml-1">({t.tier})</span>
                 </span>
                 <span class="font-mono">{t.total.toFixed(2)}</span>
               </div>
@@ -99,7 +99,7 @@ const CategorySummary: Component<CategorySummaryProps> = (props) => {
             <span>Lifestyle</span>
             <span class="font-mono">{lifestyle().toFixed(2)}</span>
           </div>
-          <div class="flex justify-between font-bold border-t pt-1">
+          <div class="flex justify-between font-bold border-t dark:border-gray-700 pt-1">
             <span>Total</span>
             <span class="font-mono">{total().toFixed(2)}</span>
           </div>
